@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片拼图游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        
+        .auth-section, .game-section, .ranking-section {
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .auth-section {
+            border-right: 1px solid #eee;
+        }
+        
+        .ranking-section {
+            border-left: 1px solid #eee;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4b6cb7;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .timer, .moves {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4b6cb7;
+        }
+        
+        .puzzle-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border: 2px solid #4b6cb7;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2px;
+            background-color: #4b6cb7;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .puzzle-piece {
+            background-size: 300px 300px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+            position: relative;
+        }
+        
+        .puzzle-piece:hover {
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+        
+        .empty {
+            background-color: #e0e0e0;
+            cursor: default;
+        }
+        
+        .empty:hover {
+            background-color: #e0e0e0;
+            transform: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .controls button {
+            width: 48%;
+        }
+        
+        .ranking-list {
+            list-style-type: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .ranking-item {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .ranking-item.current-user {
+            background-color: #e6f2ff;
+            border-left: 4px solid #4b6cb7;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #4b6cb7;
+        }
+        
+        .user-info {
+            flex-grow: 1;
+            margin-left: 15px;
+        }
+        
+        .time {
+            font-weight: bold;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .image-selector {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .image-option {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 0 5px;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .image-option.active {
+            border-color: #4b6cb7;
+        }
+        
+        .image-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        @media (max-width: 900px) {
+            .auth-section, .ranking-section {
+                border: none;
+                border-bottom: 1px solid #eee;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>图片拼图游戏</h1>
+            <div class="subtitle">挑战你的智力与速度</div>
+        </header>
+        
+        <div class="main-content">
+            <div class="auth-section">
+                <h2>用户登录/注册</h2>
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button id="login-btn">登录</button>
+                <button id="register-btn">注册</button>
+                
+                <div id="user-info" style="display: none;">
+                    <h2>用户信息</h2>
+                    <p>欢迎, <span id="current-user"></span>!</p>
+                    <div class="form-group">
+                        <label for="new-password">新密码</label>
+                        <input type="password" id="new-password" placeholder="请输入新密码">
+                    </div>
+                    <button id="change-password-btn">修改密码</button>
+                    <button id="logout-btn">退出登录</button>
+                </div>
+                
+                <div id="auth-message" class="message"></div>
+            </div>
+            
+            <div class="game-section">
+                <h2>拼图游戏</h2>
+                <div class="game-info">
+                    <div class="timer">时间: <span id="time">00:00</span></div>
+                    <div class="moves">步数: <span id="moves">0</span></div>
+                </div>
+                
+                <div class="image-selector">
+                    <div class="image-option active" data-image="1">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="山脉">
+                    </div>
+                    <div class="image-option" data-image="2">
+                        <img src="https://images.unsplash.com/photo-1505142468610-359e7d316be0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="森林">
+                    </div>
+                    <div class="image-option" data-image="3">
+                        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="日出">
+                    </div>
+                </div>
+                
+                <div class="puzzle-container" id="puzzle-container">
+                    <!-- 拼图块将通过JavaScript动态生成 -->
+                </div>
+                <div class="controls">
+                    <button id="start-btn">开始游戏</button>
+                    <button id="reset-btn">重新开始</button>
+                </div>
+                <div id="game-message" class="message"></div>
+            </div>
+            
+            <div class="ranking-section">
+                <h2>排行榜</h2>
+                <ul class="ranking-list" id="ranking-list">
+                    <!-- 排行榜将通过JavaScript动态生成 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 用户管理模块
+        const UserManager = {
+            // 获取所有用户
+            getUsers: function() {
+                return JSON.parse(localStorage.getItem('puzzleUsers')) || [];
+            },
+            
+            // 保存用户（新增：确保数据同步写入）
+            saveUsers: function(users) {
+                localStorage.setItem('puzzleUsers', JSON.stringify(users));
+                // 强制刷新本地存储缓存
+                return new Promise(resolve => setTimeout(resolve, 200));
+            },
+            
+            // 注册用户
+            register: function(username, password) {
+                const users = this.getUsers();
+                
+                // 检查用户名是否已存在
+                if (users.some(user => user.username === username)) {
+                    return { success: false, message: '用户名已存在' };
+                }
+                
+                // 添加新用户
+                users.push({
+                    username,
+                    password,
+                    bestTime: null,
+                    gamesPlayed: 0
+                });
+                
+                return this.saveUsers(users).then(() => {
+                    return { success: true, message: '注册成功' };
+                });
+            },
+            
+            // 登录用户
+            login: function(username, password) {
+                const users = this.getUsers();
+                const user = users.find(user => user.username === username && user.password === password);
+                
+                if (user) {
+                    // 更新登录状态
+                    localStorage.setItem('currentUser', username);
+                    return { success: true, message: '登录成功' };
+                } else {
+                    return { success: false, message: '用户名或密码错误' };
+                }
+            },
+            
+            // 获取当前用户
+            getCurrentUser: function() {
+                return localStorage.getItem('currentUser');
+            },
+            
+            // 退出登录
+            logout: function() {
+                localStorage.removeItem('currentUser');
+            },
+            
+            // 修改密码
+            changePassword: function(username, newPassword) {
+                const users = this.getUsers();
+                const userIndex = users.findIndex(user => user.username === username);
+                
+                if (userIndex !== -1) {
+                    users[userIndex].password = newPassword;
+                    return this.saveUsers(users).then(() => {
+                        return { success: true, message: '密码修改成功' };
+                    });
+                } else {
+                    return Promise.resolve({ success: false, message: '用户不存在' });
+                }
+            },
+            
+            // 更新用户最佳时间（修改：确保必然更新游戏次数，返回完整用户数据）
+            updateBestTime: function(username, time) {
+                const users = this.getUsers();
+                const userIndex = users.findIndex(user => user.username === username);
+                
+                if (userIndex !== -1) {
+                    const user = users[userIndex];
+                    user.gamesPlayed++; // 无论是否破纪录，都更新游戏次数
+                    const oldBestTime = user.bestTime;
+                    let newRecord = false;
+                    
+                    // 如果这是用户的第一次完成或者时间比之前的最佳时间短
+                    if (!user.bestTime || time < user.bestTime) {
+                        user.bestTime = time;
+                        newRecord = true;
+                    }
+                    
+                    // 保存并返回完整结果
+                    return this.saveUsers(users).then(() => {
+                        return {
+                            success: true,
+                            newRecord: newRecord,
+                            oldBestTime: oldBestTime,
+                            newBestTime: user.bestTime,
+                            gamesPlayed: user.gamesPlayed
+                        };
+                    });
+                }
+                
+                return Promise.resolve({ success: false });
+            },
+            
+            // 获取排行榜
+            getRankings: function() {
+                const users = this.getUsers();
+                
+                // 过滤出有最佳时间的用户并按时间排序
+                const rankedUsers = users
+                    .filter(user => user.bestTime !== null)
+                    .sort((a, b) => a.bestTime - b.bestTime)
+                    .slice(0, 10); // 只显示前10名
+                
+                return rankedUsers;
+            }
+        };
+
+        // 游戏逻辑模块
+        const PuzzleGame = {
+            size: 3,
+            moves: 0,
+            timer: null,
+            seconds: 0,
+            isPlaying: false,
+            emptyIndex: 8, // 3x3拼图中最后一个位置是空的
+            currentImage: 1,
+            // 新增：存储每个拼图块的正确索引（用于判断完成）
+            correctIndices: [0,1,2,3,4,5,6,7,8],
+            
+            // 初始化游戏
+            init: function() {
+                this.createPuzzle();
+                this.updateDisplay();
+                
+                // 事件监听
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                document.getElementById('reset-btn').addEventListener('click', () => this.resetGame());
+                
+                // 图片选择器事件
+                document.querySelectorAll('.image-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        document.querySelectorAll('.image-option').forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        this.currentImage = parseInt(option.dataset.image);
+                        this.createPuzzle();
+                    });
+                });
+            },
+            
+            // 创建拼图
+            createPuzzle: function() {
+                const container = document.getElementById('puzzle-container');
+                container.innerHTML = '';
+                
+                // 创建拼图块（按正确顺序）
+                for (let i = 0; i < this.size * this.size; i++) {
+                    const piece = document.createElement('div');
+                    piece.className = 'puzzle-piece';
+                    piece.dataset.index = i; // 存储该块的正确索引（用于判断完成）
+                    
+                    // 设置拼图块的背景图片位置
+                    const row = Math.floor(i / this.size);
+                    const col = i % this.size;
+                    
+                    if (i === this.emptyIndex) {
+                        piece.classList.add('empty');
+                    } else {
+                        // 设置背景图片和位置
+                        let imageUrl = this.getImageUrl();
+                        piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundPosition = `-${col * 100}px -${row * 100}px`;
+                        // 绑定点击事件（只绑定非空块）
+                        piece.addEventListener('click', () => this.movePiece(i));
+                    }
+                    
+                    container.appendChild(piece);
+                }
+            },
+            
+            // 获取当前选择的图片URL
+            getImageUrl: function() {
+                switch(this.currentImage) {
+                    case 1:
+                        return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+                    case 2:
+                        return 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+                    case 3:
+                        return 'https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+                    default:
+                        return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+                }
+            },
+            
+            // 移动拼图块
+            movePiece: function(pieceIndex) {
+                if (!this.isPlaying) return;
+                
+                const row = Math.floor(pieceIndex / this.size);
+                const col = pieceIndex % this.size;
+                const emptyRow = Math.floor(this.emptyIndex / this.size);
+                const emptyCol = this.emptyIndex % this.size;
+                
+                // 检查是否相邻（上下左右）
+                const isAdjacent = (Math.abs(row - emptyRow) === 1 && col === emptyCol) || 
+                                   (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+                
+                if (isAdjacent) {
+                    // 交换拼图块（修复核心：正确处理事件监听）
+                    this.swapPieces(pieceIndex, this.emptyIndex);
+                    this.emptyIndex = pieceIndex;
+                    this.moves++;
+                    this.updateDisplay();
+                    
+                    // 检查是否完成（修复核心：用正确索引判断）
+                    if (this.checkCompletion()) {
+                        this.gameComplete();
+                    }
+                }
+            },
+            
+            // 交换拼图块（修复事件监听逻辑）
+            swapPieces: function(index1, index2) {
+                const pieces = document.querySelectorAll('.puzzle-piece');
+                const piece1 = pieces[index1];
+                const piece2 = pieces[index2];
+                
+                // 交换背景图片和位置
+                const tempBg = piece1.style.backgroundImage;
+                const tempPos = piece1.style.backgroundPosition;
+                const tempIndex = piece1.dataset.index; // 交换正确索引标记
+                
+                piece1.style.backgroundImage = piece2.style.backgroundImage;
+                piece1.style.backgroundPosition = piece2.style.backgroundPosition;
+                piece1.dataset.index = piece2.dataset.index;
+                
+                piece2.style.backgroundImage = tempBg;
+                piece2.style.backgroundPosition = tempPos;
+                piece2.dataset.index = tempIndex;
+                
+                // 交换empty类和点击事件（修复核心）
+                if (piece1.classList.contains('empty')) {
+                    piece1.classList.remove('empty');
+                    piece1.addEventListener('click', () => this.movePiece(index1));
+                    piece2.classList.add('empty');
+                    piece2.removeEventListener('click', () => this.movePiece(index2));
+                } else {
+                    piece2.classList.remove('empty');
+                    piece2.addEventListener('click', () => this.movePiece(index2));
+                    piece1.classList.add('empty');
+                    piece1.removeEventListener('click', () => this.movePiece(index1));
+                }
+            },
+            
+            // 检查是否完成（修复核心：用data-index判断）
+            checkCompletion: function() {
+                const pieces = document.querySelectorAll('.puzzle-piece');
+                for (let i = 0; i < pieces.length; i++) {
+                    // 每个位置的拼图块data-index应等于其容器索引i
+                    if (parseInt(pieces[i].dataset.index) !== i) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+            
+            // 游戏完成（核心修复：异步更新+完整提示）
+            gameComplete: async function() {
+                this.isPlaying = false;
+                clearInterval(this.timer);
+                
+                const currentUser = UserManager.getCurrentUser();
+                const finishTime = this.seconds;
+                const finishMoves = this.moves;
+                const formattedTime = this.formatTime(finishTime);
+                
+                if (currentUser) {
+                    // 异步更新用户数据，确保写入完成
+                    const result = await UserManager.updateBestTime(currentUser, finishTime);
+                    if (result.success) {
+                        let message = `恭喜完成！用时: ${formattedTime}, 步数: ${finishMoves} 🎉`;
+                        if (result.newRecord) {
+                            message += `\n创造了新纪录！之前最佳: ${result.oldBestTime ? this.formatTime(result.oldBestTime) : '无'}`;
+                        } else {
+                            message += `\n当前最佳: ${this.formatTime(result.newBestTime)}`;
+                        }
+                        // 显示完整提示（支持换行）
+                        this.showMessage(message, 'success');
+                        // 数据更新完成后刷新排行榜
+                        setTimeout(updateRankings, 300);
+                    }
+                } else {
+                    // 未登录用户也显示完整完成信息
+                    this.showMessage(`恭喜完成！用时: ${formattedTime}, 步数: ${finishMoves}\n登录后可保存记录到排行榜`, 'success');
+                }
+            },
+            
+            // 开始游戏
+            startGame: function() {
+                if (!UserManager.getCurrentUser()) {
+                    this.showMessage('请先登录，登录后可保存记录到排行榜', 'error');
+                    return;
+                }
+                
+                this.isPlaying = true;
+                this.moves = 0;
+                this.seconds = 0;
+                
+                // 打乱拼图（修复：确保可还原）
+                this.shufflePuzzle();
+                
+                // 启动计时器
+                clearInterval(this.timer);
+                this.timer = setInterval(() => {
+                    this.seconds++;
+                    this.updateDisplay();
+                }, 1000);
+                
+                this.updateDisplay();
+                this.showMessage('游戏开始！加油～', 'success');
+            },
+            
+            // 打乱拼图（修复：确保3x3拼图可还原）
+            shufflePuzzle: function() {
+                let moves = 0;
+                // 执行足够多的有效移动（确保可还原）
+                while (moves < 200) {
+                    const possibleMoves = this.getPossibleMoves();
+                    if (possibleMoves.length === 0) break;
+                    
+                    const randomIndex = Math.floor(Math.random() * possibleMoves.length);
+                    const targetIndex = possibleMoves[randomIndex];
+                    
+                    // 交换并更新空块位置
+                    this.swapPieces(targetIndex, this.emptyIndex);
+                    this.emptyIndex = targetIndex;
+                    moves++;
+                }
+                this.moves = 0; // 重置步数（打乱不算玩家步数）
+            },
+            
+            // 获取可能的移动（空块周围的块）
+            getPossibleMoves: function() {
+                const moves = [];
+                const row = Math.floor(this.emptyIndex / this.size);
+                const col = this.emptyIndex % this.size;
+                
+                if (row > 0) moves.push(this.emptyIndex - this.size); // 上
+                if (row < this.size - 1) moves.push(this.emptyIndex + this.size); // 下
+                if (col > 0) moves.push(this.emptyIndex - 1); // 左
+                if (col < this.size - 1) moves.push(this.emptyIndex + 1); // 右
+                
+                return moves;
+            },
+            
+            // 重置游戏
+            resetGame: function() {
+                this.isPlaying = false;
+                clearInterval(this.timer);
+                this.moves = 0;
+                this.seconds = 0;
+                this.emptyIndex = 8; // 重置空块位置到最后
+                this.createPuzzle();
+                this.updateDisplay();
+                this.showMessage('游戏已重置，点击开始重新挑战', 'success');
+            },
+            
+            // 更新显示
+            updateDisplay: function() {
+                document.getElementById('time').textContent = this.formatTime(this.seconds);
+                document.getElementById('moves').textContent = this.moves;
+            },
+            
+            // 格式化时间
+            formatTime: function(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            },
+            
+            // 显示消息（修复：支持换行显示）
+            showMessage: function(message, type) {
+                const messageEl = document.getElementById('game-message');
+                messageEl.textContent = message;
+                messageEl.className = `message ${type}`;
+                messageEl.style.display = 'block';
+                messageEl.style.whiteSpace = 'pre-line'; // 支持换行符\n
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 5000); // 延长提示显示时间到5秒
+            }
+        };
+
+        // 界面管理模块（修改：适配异步操作）
+        const UIManager = {
+            // 初始化界面
+            init: function() {
+                this.checkLoginStatus();
+                this.setupEventListeners();
+                PuzzleGame.init();
+                // 初始化时强制更新排行榜
+                setTimeout(updateRankings, 300);
+            },
+            
+            // 检查登录状态
+            checkLoginStatus: function() {
+                const currentUser = UserManager.getCurrentUser();
+                
+                if (currentUser) {
+                    this.showUserInfo(currentUser);
+                } else {
+                    this.showLoginForm();
+                }
+            },
+            
+            // 显示登录表单
+            showLoginForm: function() {
+                document.getElementById('user-info').style.display = 'none';
+                document.querySelector('.auth-section h2').textContent = '用户登录/注册';
+            },
+            
+            // 显示用户信息
+            showUserInfo: function(username) {
+                document.getElementById('current-user').textContent = username;
+                document.getElementById('user-info').style.display = 'block';
+                document.querySelector('.auth-section h2').textContent = '用户信息';
+            },
+            
+            // 设置事件监听（修改：适配异步注册/修改密码）
+            setupEventListeners: function() {
+                // 登录按钮
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!username || !password) {
+                        this.showAuthMessage('请输入用户名和密码', 'error');
+                        return;
+                    }
+                    
+                    const result = UserManager.login(username, password);
+                    
+                    if (result.success) {
+                        this.showAuthMessage(result.message, 'success');
+                        this.checkLoginStatus();
+                        // 登录后更新排行榜
+                        setTimeout(updateRankings, 300);
+                    } else {
+                        this.showAuthMessage(result.message, 'error');
+                    }
+                });
+                
+                // 注册按钮（异步处理）
+                document.getElementById('register-btn').addEventListener('click', async () => {
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!username || !password) {
+                        this.showAuthMessage('请输入用户名和密码', 'error');
+                        return;
+                    }
+                    
+                    const result = await UserManager.register(username, password);
+                    this.showAuthMessage(result.message, result.success ? 'success' : 'error');
+                    
+                    if (result.success) {
+                        // 注册后更新排行榜
+                        setTimeout(updateRankings, 300);
+                    }
+                });
+                
+                // 修改密码按钮（异步处理）
+                document.getElementById('change-password-btn').addEventListener('click', async () => {
+                    const newPassword = document.getElementById('new-password').value;
+                    const currentUser = UserManager.getCurrentUser();
+                    
+                    if (!newPassword) {
+                        this.showAuthMessage('请输入新密码', 'error');
+                        return;
+                    }
+                    
+                    const result = await UserManager.changePassword(currentUser, newPassword);
+                    this.showAuthMessage(result.message, result.success ? 'success' : 'error');
+                    
+                    if (result.success) {
+                        document.getElementById('new-password').value = '';
+                        // 修改密码后更新排行榜
+                        setTimeout(updateRankings, 300);
+                    }
+                });
+                
+                // 退出登录按钮
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    UserManager.logout();
+                    this.checkLoginStatus();
+                    this.showAuthMessage('已退出登录', 'success');
+                    // 退出后更新排行榜
+                    setTimeout(updateRankings, 300);
+                });
+            },
+            
+            // 显示认证消息
+            showAuthMessage: function(message, type) {
+                const messageEl = document.getElementById('auth-message');
+                messageEl.textContent = message;
+                messageEl.className = `message ${type}`;
+                messageEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        // 更新排行榜（核心：确保每次读取最新数据）
+        function updateRankings() {
+            // 强制重新读取最新的用户数据
+            const rankings = UserManager.getRankings();
+            const rankingList = document.getElementById('ranking-list');
+            const currentUser = UserManager.getCurrentUser();
+            
+            rankingList.innerHTML = '';
+            
+            if (rankings.length === 0) {
+                rankingList.innerHTML = '<li class="ranking-item">暂无玩家记录，快来创造第一个记录吧！</li>';
+                return;
+            }
+            
+            // 重新渲染排行榜（显示排名、用户名、最佳时间）
+            rankings.forEach((user, index) => {
+                const item = document.createElement('li');
+                item.className = 'ranking-item';
+                
+                // 当前登录用户高亮
+                if (currentUser && user.username === currentUser) {
+                    item.classList.add('current-user');
+                }
+                
+                // 显示排名（前3名添加特殊标记）
+                let rankText = index + 1;
+                if (index === 0) rankText = '🥇 ' + rankText;
+                if (index === 1) rankText = '🥈 ' + rankText;
+                if (index === 2) rankText = '🥉 ' + rankText;
+                
+                item.innerHTML = `
+                    <div class="rank">${rankText}</div>
+                    <div class="user-info">${user.username}<br><small>游戏次数: ${user.gamesPlayed}</small></div>
+                    <div class="time">${PuzzleGame.formatTime(user.bestTime)}</div>
+                `;
+                
+                rankingList.appendChild(item);
+            });
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            UIManager.init();
+            // 额外添加一次初始化更新（双重保障）
+            setTimeout(updateRankings, 500);
+        });
+    </script>
+</body>
+</html>
